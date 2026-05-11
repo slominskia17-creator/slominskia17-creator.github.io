@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Поиск карт по спортивному ориентированию</title>
+    <style>
+        :root {
+            --bg: #f5f1eb;
+            --card-bg: #ffffff;
+            --primary: #2c5f2d;
+            --primary-hover: #1e4420;
+            --accent: #e07a3d;
+            --edit: #3a7a3b;
+            --edit-hover: #2b5e2c;
+            --text: #2b2b2b;
+            --text-light: #5c5c5c;
+            --border: #d9cfc0;
+            --tag-bg: #e8e0d5;
+            --tag-active: #2c5f2d;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --transition: 0.2s ease;
+            --font: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3c1f 0%, #2c5f2d 40%, #3a7a3b 100%);
+            color: #fff;
+            padding: 28px 20px 22px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+        header::after {
+            content: '';
+            position: absolute;
+            top: -60px;
+            right: -40px;
+            width: 180px;
+            height: 180px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            position: relative;
+            z-index: 1;
+        }
+        header .subtitle {
+            font-size: 0.95rem;
+            opacity: 0.85;
+            margin-top: 6px;
+            position: relative;
+            z-index: 1;
+        }
+
+        main {
+            flex: 1;
+            max-width: 1100px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 28px 20px 40px;
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 28px;
+            align-items: start;
+        }
+
+        @media (max-width: 850px) {
+            main {
+                grid-template-columns: 1fr;
+                gap: 22px;
+                padding: 20px 14px 32px;
+            }
+        }
+
+        .section {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 22px 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        .section h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #1e3c1f;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+        .section h2 .icon {
+            font-size: 1.3rem;
+        }
+
+        .search-wrap {
+            position: relative;
+            margin-bottom: 18px;
+        }
+        .search-wrap input {
+            width: 100%;
+            padding: 12px 42px 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            background: #fdfbf8;
+            transition: var(--transition);
+            font-family: var(--font);
+        }
+        .search-wrap input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(44, 95, 45, 0.08);
+            background: #fff;
+        }
+        .search-wrap .search-icon {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .tag-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .tag-pill {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1.5px solid var(--border);
+            background: var(--tag-bg);
+            color: var(--text);
+            transition: var(--transition);
+            user-select: none;
+            white-space: nowrap;
+        }
+        .tag-pill:hover {
+            background: #d5c9b6;
+            border-color: #b8a78a;
+        }
+        .tag-pill.active {
+            background: var(--tag-active);
+            color: #fff;
+            border-color: var(--tag-active);
+            font-weight: 600;
+        }
+        .tag-pill .count {
+            font-size: 0.75rem;
+            margin-left: 3px;
+            opacity: 0.8;
+        }
+
+        .reset-tags {
+            font-size: 0.8rem;
+            color: var(--accent);
+            cursor: pointer;
+            margin-top: 4px;
+            display: inline-block;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        .reset-tags:hover {
+            color: #c55d20;
+            text-decoration: underline;
+        }
+
+        .cards-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 6px;
+            max-height: 62vh;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .cards-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .cards-list::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 10px;
+        }
+        .cards-list::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 10px;
+        }
+
+        .card {
+            background: #fdfbf8;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px 18px;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+        }
+        .card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            border-color: #b8a78a;
+            transform: translateY(-1px);
+        }
+        .card h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #1e3c1f;
+            margin-bottom: 4px;
+            word-break: break-word;
+            padding-right: 70px;
+        }
+        .card .card-meta {
+            font-size: 0.82rem;
+            color: var(--text-light);
+            margin-bottom: 8px;
+        }
+        .card .card-desc {
+            font-size: 0.88rem;
+            color: #444;
+            margin-bottom: 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .card .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .card .card-tags span {
+            font-size: 0.75rem;
+            background: #e8e0d5;
+            padding: 3px 10px;
+            border-radius: 14px;
+            color: #4a3f35;
+            font-weight: 500;
+        }
+        .card .card-file {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8rem;
+            color: var(--primary);
+            font-weight: 600;
+            margin-top: 8px;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        .card .card-file:hover {
+            color: var(--accent);
+        }
+        .card .card-actions {
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            display: flex;
+            gap: 6px;
+        }
+        .card .action-btn {
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+            opacity: 0.4;
+            transition: var(--transition);
+            padding: 4px 6px;
+            border-radius: 4px;
+            line-height: 1;
+        }
+        .card .action-btn:hover {
+            opacity: 1;
+            background: #f0ebe0;
+        }
+        .card .delete-btn {
+            color: #c0392b;
+        }
+        .card .delete-btn:hover {
+            background: #fdecea;
+        }
+        .card .edit-btn {
+            color: var(--edit);
+        }
+        .card .edit-btn:hover {
+            background: #e3f0e3;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 28px 16px;
+            color: #999;
+            font-style: italic;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            color: #3a3a3a;
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            font-family: var(--font);
+            background: #fdfbf8;
+            transition: var(--transition);
+            resize: vertical;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(44, 95, 45, 0.08);
+            background: #fff;
+        }
+        .form-group textarea {
+            min-height: 70px;
+        }
+        .form-group .hint {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 3px;
+        }
+        .form-group input[type="file"] {
+            padding: 8px;
+            font-size: 0.85rem;
+            border: 2px dashed var(--border);
+            background: #fdfbf8;
+            cursor: pointer;
+        }
+        .form-group input[type="file"]:hover {
+            border-color: var(--primary);
+            background: #f9f7f2;
+        }
+        .btn {
+            display: inline-block;
+            padding: 11px 24px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: var(--font);
+            letter-spacing: 0.2px;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            width: 100%;
+        }
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            box-shadow: 0 4px 12px rgba(44, 95, 45, 0.25);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid var(--border);
+            color: var(--text);
+            width: 100%;
+            margin-top: 8px;
+        }
+        .btn-outline:hover {
+            background: #f0ebe0;
+            border-color: #b8a78a;
+        }
+        .success-msg {
+            background: #e6f4e6;
+            color: #1e5c1e;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 0.88rem;
+            margin-top: 10px;
+            display: none;
+            font-weight: 500;
+        }
+        .success-msg.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        footer {
+            background: #e0d7cb;
+            text-align: center;
+            padding: 16px 20px;
+            font-size: 0.8rem;
+            color: #6b5e4f;
+            border-top: 1px solid var(--border);
+            margin-top: auto;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .stat-badge {
+            background: #f0ebe0;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #4a3f35;
+        }
+        .stat-badge strong {
+            color: #1e3c1f;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🗺️ Поиск карт по спортивному ориентированию</h1>
+        <div class="subtitle">На этом сайте вы сможете найти и добавить карты по спортивному ориентированию России</div>
+    </header>
+
+    <main>
+        <div>
+            <div class="section">
+                <h2><span class="icon">🔍</span> Поиск дистанций</h2>
+                <div class="search-wrap">
+                    <input type="text" id="searchInput" placeholder="Введите название дистанции или часть названия…" autocomplete="off">
+                    <span class="search-icon">🔎</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stat-badge">Всего карт: <strong id="totalCount">0</strong></span>
+                    <span class="stat-badge">Найдено: <strong id="filteredCount">0</strong></span>
+                </div>
+                <p style="font-weight:600;font-size:0.9rem;margin-bottom:6px;">🏷️ Фильтр по тегам:</p>
+                <div class="tag-cloud" id="tagCloud"></div>
+                <span class="reset-tags" id="resetTags">✕ Сбросить фильтр тегов</span>
+                <div class="cards-list" id="cardsList">
+                    <div class="no-results">Загрузка данных…</div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="section" id="formSection">
+                <h2 id="formTitle"><span class="icon">📤</span> Добавить дистанцию</h2>
+                <form id="uploadForm">
+                    <input type="hidden" id="editId" value="">
+                    <div class="form-group">
+                        <label for="courseName">Название дистанции *</label>
+                        <input type="text" id="courseName" placeholder="Например: Чемпионат области 2025 — Лосиный остров" required maxlength="120">
+                    </div>
+                    <div class="form-group">
+                        <label for="courseDesc">Краткое описание</label>
+                        <textarea id="courseDesc" placeholder="Опишите местность, масштаб, особенности дистанции…" maxlength="400"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="courseTags">Теги (через запятую) *</label>
+                        <input type="text" id="courseTags" placeholder="лес, спринт, Москва, 2025" required maxlength="200">
+                        <span class="hint">Минимум один тег. Например: лес, город, зима, область</span>
+                    </div>
+                    <div class="form-group" id="fileGroup">
+                        <label for="courseFile">Файл карты (изображение) *</label>
+                        <input type="file" id="courseFile" accept="image/*,.pdf">
+                        <span class="hint" id="fileHint">Поддерживаются JPG, PNG, PDF. Макс. 20 МБ</span>
+                        <span id="currentFileName" style="font-size:0.8rem;color:#2c5f2d;display:none;"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">📥 Загрузить дистанцию</button>
+                    <button type="button" class="btn btn-outline" id="cancelEditBtn" style="display:none;">↩️ Отмена</button>
+                    <div class="success-msg" id="successMsg"></div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        © 2025 Поиск карт по спортивному ориентированию России · Данные хранятся в IndexedDB (поддержка больших файлов)
+    </footer>
+
+    <script>
+        (function() {
+            // ──────────────── IndexedDB ────────────────
+            const DB_NAME = 'OrienteeringDB';
+            const DB_VERSION = 1;
+            const STORE_NAME = 'courses';
+
+            function openDB() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(DB_NAME, DB_VERSION);
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains(STORE_NAME)) {
+                            db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                        }
+                    };
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async function loadCoursesFromDB() {
+                const db = await openDB();
+                return new Promise((resolve) => {
+                    const tx = db.transaction(STORE_NAME, 'readonly');
+                    const store = tx.objectStore(STORE_NAME);
+                    const getAll = store.getAll();
+                    getAll.onsuccess = () => resolve(getAll.result || []);
+                    getAll.onerror = () => resolve([]);
+                });
+            }
+
+            async function saveCourseToDB(course) {
+                const db = await openDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction(STORE_NAME, 'readwrite');
+                    const store = tx.objectStore(STORE_NAME);
+                    const request = store.put(course);
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async function deleteCourseFromDB(id) {
+                const db = await openDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction(STORE_NAME, 'readwrite');
+                    const store = tx.objectStore(STORE_NAME);
+                    const request = store.delete(id);
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            // Миграция из localStorage (если есть старые данные)
+            async function migrateFromLocalStorage() {
+                const oldKey = 'orienteering_courses_v2'; // предыдущий ключ
+                const raw = localStorage.getItem(oldKey);
+                if (!raw) return;
+                try {
+                    const oldCourses = JSON.parse(raw);
+                    if (Array.isArray(oldCourses) && oldCourses.length > 0) {
+                        const db = await openDB();
+                        const tx = db.transaction(STORE_NAME, 'readwrite');
+                        const store = tx.objectStore(STORE_NAME);
+                        for (const course of oldCourses) {
+                            // Убедимся, что tags массив
+                            if (!Array.isArray(course.tags)) course.tags = [];
+                            store.put(course);
+                        }
+                        await new Promise((resolve, reject) => {
+                            tx.oncomplete = resolve;
+                            tx.onerror = reject;
+                        });
+                        localStorage.removeItem(oldKey);
+                        console.log('Миграция из localStorage завершена.');
+                    }
+                } catch (e) {
+                    console.warn('Ошибка миграции:', e);
+                }
+            }
+
+            // ──────────────── Состояние ────────────────
+            let courses = [];
+            let activeTag = null;
+            let searchQuery = '';
+            let editingCourseId = null;
+
+            const cardsList = document.getElementById('cardsList');
+            const tagCloud = document.getElementById('tagCloud');
+            const resetTags = document.getElementById('resetTags');
+            const searchInput = document.getElementById('searchInput');
+            const totalCountEl = document.getElementById('totalCount');
+            const filteredCountEl = document.getElementById('filteredCount');
+            const successMsg = document.getElementById('successMsg');
+            const uploadForm = document.getElementById('uploadForm');
+            const formTitle = document.getElementById('formTitle');
+            const submitBtn = document.getElementById('submitBtn');
+            const cancelEditBtn = document.getElementById('cancelEditBtn');
+            const editIdInput = document.getElementById('editId');
+            const courseNameInput = document.getElementById('courseName');
+            const courseDescInput = document.getElementById('courseDesc');
+            const courseTagsInput = document.getElementById('courseTags');
+            const courseFileInput = document.getElementById('courseFile');
+            const fileHint = document.getElementById('fileHint');
+            const currentFileNameSpan = document.getElementById('currentFileName');
+
+            // ── Теги ──
+            function getAllTags() {
+                const tagMap = new Map();
+                courses.forEach(c => {
+                    (c.tags || []).forEach(t => {
+                        const lower = t.toLowerCase();
+                        tagMap.set(lower, (tagMap.get(lower) || 0) + 1);
+                    });
+                });
+                return [...tagMap.entries()]
+                    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+                    .map(([tag, count]) => ({ tag, count }));
+            }
+
+            function getFilteredCourses() {
+                let filtered = [...courses];
+                if (activeTag) {
+                    filtered = filtered.filter(c => (c.tags || []).some(t => t.toLowerCase() === activeTag));
+                }
+                if (searchQuery.trim()) {
+                    const q = searchQuery.trim().toLowerCase();
+                    filtered = filtered.filter(c =>
+                        c.name.toLowerCase().includes(q) ||
+                        (c.description || '').toLowerCase().includes(q) ||
+                        (c.tags || []).some(t => t.toLowerCase().includes(q))
+                    );
+                }
+                return filtered;
+            }
+
+            function renderTagCloud() {
+                const allTags = getAllTags();
+                tagCloud.innerHTML = '';
+                if (allTags.length === 0) {
+                    tagCloud.innerHTML = '<span style="font-size:0.85rem;color:#999;">Пока нет тегов — добавьте первую дистанцию.</span>';
+                    resetTags.style.display = 'none';
+                    return;
+                }
+                allTags.forEach(({ tag, count }) => {
+                    const pill = document.createElement('span');
+                    pill.className = 'tag-pill';
+                    if (activeTag === tag) pill.classList.add('active');
+                    pill.innerHTML = `${escapeHTML(tag)}<span class="count">(${count})</span>`;
+                    pill.addEventListener('click', () => {
+                        activeTag = (activeTag === tag) ? null : tag;
+                        renderAll();
+                    });
+                    tagCloud.appendChild(pill);
+                });
+                resetTags.style.display = activeTag ? 'inline-block' : 'none';
+            }
+
+            function renderCards() {
+                const filtered = getFilteredCourses();
+                cardsList.innerHTML = '';
+
+                if (filtered.length === 0) {
+                    const msg = courses.length === 0 ?
+                        'Пока нет загруженных карт. Добавьте первую дистанцию через форму справа.' :
+                        'Ничего не найдено. Попробуйте изменить запрос или сбросить фильтр тегов.';
+                    cardsList.innerHTML = `<div class="no-results">${msg}</div>`;
+                } else {
+                    filtered.forEach(course => {
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        card.setAttribute('data-id', course.id);
+
+                        const tagsHTML = (course.tags || []).map(t => `<span>${escapeHTML(t)}</span>`).join('');
+                        const descHTML = course.description ? `<div class="card-desc">${escapeHTML(course.description)}</div>` : '';
+                        const fileLink = course.fileDataUrl ?
+                            `<a href="${course.fileDataUrl}" class="card-file" download="${escapeHTML(course.fileName || 'karta')}" target="_blank">📎 ${escapeHTML(course.fileName || 'Скачать карту')}</a>` :
+                            '<span style="font-size:0.8rem;color:#999;">Файл не прикреплён</span>';
+
+                        card.innerHTML = `
+                            <h3>${escapeHTML(course.name)}</h3>
+                            <div class="card-meta">${escapeHTML(course.date || 'неизвестно')}</div>
+                            ${descHTML}
+                            <div class="card-tags">${tagsHTML || '<span>без тегов</span>'}</div>
+                            ${fileLink}
+                            <div class="card-actions">
+                                <button class="action-btn edit-btn" title="Редактировать дистанцию">✏️</button>
+                                <button class="action-btn delete-btn" title="Удалить дистанцию">🗑️</button>
+                            </div>
+                        `;
+
+                        card.querySelector('.delete-btn').addEventListener('click', async (e) => {
+                            e.stopPropagation();
+                            if (confirm(`Удалить дистанцию «${course.name}»?`)) {
+                                await deleteCourseFromDB(course.id);
+                                courses = courses.filter(c => c.id !== course.id);
+                                if (editingCourseId === course.id) resetFormToAddMode();
+                                const remainingTags = new Set();
+                                courses.forEach(c => (c.tags || []).forEach(t => remainingTags.add(t.toLowerCase())));
+                                if (activeTag && !remainingTags.has(activeTag)) activeTag = null;
+                                renderAll();
+                            }
+                        });
+
+                        card.querySelector('.edit-btn').addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            startEditCourse(course);
+                        });
+
+                        card.addEventListener('click', () => {
+                            if (course.fileDataUrl) window.open(course.fileDataUrl, '_blank');
+                        });
+
+                        cardsList.appendChild(card);
+                    });
+                }
+
+                totalCountEl.textContent = courses.length;
+                filteredCountEl.textContent = filtered.length;
+            }
+
+            function renderAll() {
+                renderTagCloud();
+                renderCards();
+            }
+
+            function startEditCourse(course) {
+                editingCourseId = course.id;
+                editIdInput.value = course.id;
+                courseNameInput.value = course.name;
+                courseDescInput.value = course.description || '';
+                courseTagsInput.value = (course.tags || []).join(', ');
+                courseFileInput.value = '';
+                courseFileInput.required = false;
+
+                if (course.fileName) {
+                    currentFileNameSpan.textContent = `📄 Текущий файл: ${course.fileName}`;
+                    currentFileNameSpan.style.display = 'inline';
+                    fileHint.textContent = 'Оставьте поле пустым, чтобы не менять файл.';
+                } else {
+                    currentFileNameSpan.style.display = 'none';
+                    fileHint.textContent = 'Поддерживаются JPG, PNG, PDF. Макс. 20 МБ';
+                }
+
+                formTitle.innerHTML = '<span class="icon">✏️</span> Редактировать дистанцию';
+                submitBtn.textContent = '💾 Сохранить изменения';
+                cancelEditBtn.style.display = 'block';
+            }
+
+            function resetFormToAddMode() {
+                editingCourseId = null;
+                editIdInput.value = '';
+                courseNameInput.value = '';
+                courseDescInput.value = '';
+                courseTagsInput.value = '';
+                courseFileInput.value = '';
+                courseFileInput.required = true;
+                currentFileNameSpan.style.display = 'none';
+                fileHint.textContent = 'Поддерживаются JPG, PNG, PDF. Макс. 20 МБ';
+
+                formTitle.innerHTML = '<span class="icon">📤</span> Добавить дистанцию';
+                submitBtn.textContent = '📥 Загрузить дистанцию';
+                cancelEditBtn.style.display = 'none';
+            }
+
+            cancelEditBtn.addEventListener('click', resetFormToAddMode);
+
+            uploadForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const name = courseNameInput.value.trim();
+                const description = courseDescInput.value.trim();
+                const tagsRaw = courseTagsInput.value.trim();
+                const file = courseFileInput.files[0];
+                const isEditing = !!editingCourseId;
+
+                if (!name) return alert('Введите название дистанции.');
+                if (!tagsRaw) return alert('Укажите хотя бы один тег.');
+
+                const tags = tagsRaw.split(',').map(t => t.trim()).filter(t => t.length > 0);
+                if (tags.length === 0) return alert('Укажите хотя бы один тег.');
+
+                const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 МБ
+                if (!isEditing && !file) return alert('Выберите файл карты.');
+                if (file && file.size > MAX_FILE_SIZE) {
+                    return alert(`Файл слишком большой. Максимальный размер: 20 МБ.`);
+                }
+
+                const processFile = (fileDataUrl, fileName, fileType) => {
+                    return new Promise(async (resolve) => {
+                        if (isEditing) {
+                            const course = courses.find(c => c.id === editingCourseId);
+                            if (!course) {
+                                alert('Редактируемая дистанция не найдена.');
+                                resetFormToAddMode();
+                                renderAll();
+                                return resolve();
+                            }
+                            course.name = name;
+                            course.description = description;
+                            course.tags = tags;
+                            if (fileDataUrl) {
+                                course.fileDataUrl = fileDataUrl;
+                                course.fileName = fileName;
+                                course.fileType = fileType;
+                            }
+                            course.date = new Date().toLocaleDateString('ru-RU', {
+                                day: 'numeric', month: 'long', year: 'numeric',
+                                hour: '2-digit', minute: '2-digit'
+                            }) + ' (изменено)';
+                            await saveCourseToDB(course);
+                        } else {
+                            const newCourse = {
+                                id: Date.now(),
+                                name,
+                                description,
+                                tags,
+                                fileName,
+                                fileDataUrl,
+                                fileType,
+                                date: new Date().toLocaleDateString('ru-RU', {
+                                    day: 'numeric', month: 'long', year: 'numeric',
+                                    hour: '2-digit', minute: '2-digit'
+                                }),
+                            };
+                            await saveCourseToDB(newCourse);
+                            courses.unshift(newCourse);
+                        }
+
+                        resetFormToAddMode();
+                        successMsg.textContent = isEditing ? '✅ Дистанция обновлена!' : '✅ Дистанция успешно добавлена!';
+                        successMsg.classList.add('show');
+                        setTimeout(() => successMsg.classList.remove('show'), 2500);
+
+                        const remainingTags = new Set();
+                        courses.forEach(c => (c.tags || []).forEach(t => remainingTags.add(t.toLowerCase())));
+                        if (activeTag && !remainingTags.has(activeTag)) activeTag = null;
+
+                        await refreshCourses();
+                        renderAll();
+                        resolve();
+                    });
+                };
+
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => processFile(ev.target.result, file.name, file.type);
+                    reader.onerror = () => alert('Ошибка чтения файла.');
+                    reader.readAsDataURL(file);
+                } else {
+                    await processFile(null, null, null);
+                }
+            });
+
+            let debounceTimer;
+            searchInput.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    searchQuery = searchInput.value;
+                    renderCards();
+                }, 250);
+            });
+
+            resetTags.addEventListener('click', () => {
+                activeTag = null;
+                renderAll();
+            });
+
+            async function refreshCourses() {
+                courses = await loadCoursesFromDB();
+            }
+
+            async function init() {
+                await migrateFromLocalStorage();
+                await refreshCourses();
+                // Убедимся, что у всех есть tags (массив)
+                let needsSave = false;
+                for (const c of courses) {
+                    if (!Array.isArray(c.tags)) {
+                        c.tags = [];
+                        needsSave = true;
+                        await saveCourseToDB(c);
+                    }
+                }
+                if (needsSave) await refreshCourses();
+
+                resetFormToAddMode();
+                renderAll();
+
+                // Если база пуста, покажем подсказку
+                if (courses.length === 0) {
+                    cardsList.innerHTML = '<div class="no-results">Пока нет загруженных карт. Добавьте первую дистанцию через форму справа.</div>';
+                }
+            }
+
+            function escapeHTML(str) {
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+
+            init().catch(err => console.error('Ошибка инициализации:', err));
+        })();
+    </script>
+</body>
+</html>
